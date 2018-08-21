@@ -1,5 +1,6 @@
 'use strict';
 const path = require('path')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 var config = {
   projectName: 'taro-ui-test',
   date: '2018-7-31',
@@ -16,30 +17,6 @@ var config = {
       sourceMap: true,
       presets: ['env'],
       plugins: ['transform-class-properties', 'transform-decorators-legacy', 'transform-object-rest-spread']
-    },
-    typescript: {
-      compilerOptions: {
-        allowSyntheticDefaultImports: true,
-        baseUrl: '.',
-        declaration: false,
-        experimentalDecorators: true,
-        jsx: 'react',
-        jsxFactory: 'Nerv.createElement',
-        module: 'commonjs',
-        moduleResolution: 'node',
-        noImplicitAny: false,
-        noUnusedLocals: true,
-        outDir: './dist/',
-        preserveConstEnums: true,
-        removeComments: false,
-        rootDir: '.',
-        sourceMap: true,
-        strictNullChecks: true,
-        target: 'es6'
-      },
-      include: ['src/**/*'],
-      exclude: ['node_modules'],
-      compileOnSave: false
     }
   },
   defineConstants: {},
@@ -71,7 +48,7 @@ var config = {
         }
       }
     },
-    webpack: function (config, webpack) {
+    webpack: function (config, webpack, opts) {
       config.output = {
         path: path.join(process.cwd(), 'dist', 'h5'),
         filename: 'index.js',
@@ -86,7 +63,18 @@ var config = {
         'weui': 'commonjs2 weui'
       }
       config.plugins.splice(1)
+      config.plugins[0] = new MiniCssExtractPlugin({
+        filename: 'css/index.css',
+        chunkFilename: 'css/[id].css'
+      })
+      const copySassLoader = {...config.module.rules[1].oneOf[0]}
+      copySassLoader.use = [...copySassLoader.use]
+      delete copySassLoader.exclude
+      copySassLoader.include = [
+        path.resolve(__dirname, '..', './.temp/components/theme/index.scss')
+      ]
       config.module.rules[1].oneOf.forEach(item => item.use.splice(0, 1, require.resolve('style-loader')))
+      config.module.rules[1].oneOf.unshift(copySassLoader)
       return config
     }
   }
